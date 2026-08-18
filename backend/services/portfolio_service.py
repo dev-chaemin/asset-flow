@@ -104,6 +104,43 @@ def calculate_investment_amounts(
     return result
 
 
+def calculate_current_asset_allocation(
+    portfolio: list,
+    current_asset: int,
+):
+    result = []
+
+    for item in portfolio:
+        amount = current_asset * item["weight"] / 100
+
+        result.append({
+            **item,
+            "amount": int(amount),
+        })
+
+    return result
+
+
+def calculate_principal_summary(
+    current_asset: int,
+    monthly_investment: int,
+    investment_years: int,
+):
+    future_contributions = (
+        monthly_investment
+        * 12
+        * investment_years
+    )
+
+    total_principal = current_asset + future_contributions
+
+    return {
+        "current_asset": current_asset,
+        "future_contributions": future_contributions,
+        "total_principal": total_principal,
+    }
+
+
 def calculate_portfolio(request: PortfolioRequest):
     risk_score = calculate_risk_score(request)
     risk_grade = determine_risk_grade(risk_score)
@@ -113,6 +150,17 @@ def calculate_portfolio(request: PortfolioRequest):
     investment_plan = calculate_investment_amounts(
         portfolio,
         request.monthly_investment,
+    )
+
+    current_asset_plan = calculate_current_asset_allocation(
+        portfolio,
+        request.current_asset,
+    )
+
+    principal_summary = calculate_principal_summary(
+        request.current_asset,
+        request.monthly_investment,
+        request.investment_years,
     )
 
     return {
@@ -126,4 +174,6 @@ def calculate_portfolio(request: PortfolioRequest):
         "allocation": allocation,
         "portfolio": portfolio,
         "investment_plan": investment_plan,
+        "current_asset_plan": current_asset_plan,
+        "principal_summary": principal_summary,
     }
