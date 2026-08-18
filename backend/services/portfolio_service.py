@@ -86,6 +86,22 @@ def create_portfolio(risk_grade: str):
             {"asset": "Bond", "symbol": "BOND", "weight": 50},
             {"asset": "Cash", "symbol": "CASH", "weight": 20},
         ]
+    
+def calculate_investment_amounts(
+    portfolio: list,
+    monthly_investment: int,
+):
+    result = []
+
+    for item in portfolio:
+        amount = monthly_investment * item["weight"] / 100
+
+        result.append({
+            **item,
+            "amount": int(amount),
+        })
+
+    return result
 
 
 def calculate_portfolio(request: PortfolioRequest):
@@ -93,6 +109,11 @@ def calculate_portfolio(request: PortfolioRequest):
     risk_grade = determine_risk_grade(risk_score)
     allocation = create_allocation(risk_grade)
     portfolio = create_portfolio(risk_grade)
+
+    investment_plan = calculate_investment_amounts(
+        portfolio,
+        request.monthly_investment,
+    )
 
     return {
         "age": request.age,
@@ -104,4 +125,5 @@ def calculate_portfolio(request: PortfolioRequest):
         "risk_grade": risk_grade,
         "allocation": allocation,
         "portfolio": portfolio,
+        "investment_plan": investment_plan,
     }
