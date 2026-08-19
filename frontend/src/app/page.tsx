@@ -1,6 +1,15 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 type PortfolioItem = {
   asset: string;
@@ -28,6 +37,18 @@ type PortfolioResult = {
   investment_plan: PortfolioItem[];
   current_asset_plan: PortfolioItem[];
   principal_summary: PrincipalSummary;
+
+  yearly_projection: {
+    year: number;
+    asset: number;
+  }[];
+
+  future_simulation: {
+    annual_return: number;
+    future_value: number;
+    total_principal: number;
+    investment_profit: number;
+  };
 };
 
 export default function Home() {
@@ -287,6 +308,77 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+
+                <div>
+                  <h3 className="mb-3 font-semibold">미래 자산 시뮬레이션</h3>
+
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-xl bg-gray-50 p-4">
+                      <p className="text-sm text-gray-500">
+                        {investmentYears}년 후 예상 자산
+                      </p>
+                      <p className="mt-1 text-lg font-bold">
+                        {result.future_simulation.future_value.toLocaleString()}원
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl bg-gray-50 p-4">
+                      <p className="text-sm text-gray-500">총 투자원금</p>
+                      <p className="mt-1 text-lg font-bold">
+                        {result.future_simulation.total_principal.toLocaleString()}원
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl bg-gray-50 p-4">
+                      <p className="text-sm text-gray-500">예상 투자수익</p>
+                      <p className="mt-1 text-lg font-bold">
+                        +{result.future_simulation.investment_profit.toLocaleString()}원
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="mt-3 text-xs text-gray-500">
+                    연 {(result.future_simulation.annual_return * 100).toFixed(1)}% 수익률을
+                    가정한 시뮬레이션입니다.
+                  </p>
+                </div>
+                
+                <div>
+                    <h3 className="mb-4 font-semibold">예상 자산 성장</h3>
+
+                    <div className="h-80 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={result.yearly_projection}>
+                          <CartesianGrid strokeDasharray="3 3" />
+
+                          <XAxis
+                            dataKey="year"
+                            tickFormatter={(value) => `${value}년`}
+                          />
+
+                          <YAxis
+                            tickFormatter={(value) => {
+                              const eok = value / 100000000;
+                              return `${Number(eok.toFixed(1))}억`;
+                            }}
+                          />
+
+                          <Tooltip
+                            formatter={(value) =>
+                              `${Number(value).toLocaleString()}원`
+                            }
+                            labelFormatter={(label) => `${label}년`}
+                          />
+
+                          <Line
+                            type="monotone"
+                            dataKey="asset"
+                            strokeWidth={2}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>      
               </div>
             )}
           </section>

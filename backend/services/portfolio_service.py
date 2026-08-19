@@ -141,6 +141,84 @@ def calculate_principal_summary(
     }
 
 
+def get_expected_annual_return(risk_grade: str):
+    expected_return_map = {
+        "conservative": 0.04,
+        "balanced": 0.06,
+        "aggressive": 0.08,
+    }
+
+    return expected_return_map[risk_grade]
+
+
+def simulate_future_value(
+    current_asset: int,
+    monthly_investment: int,
+    investment_years: int,
+    annual_return: float,
+):
+    monthly_return = annual_return / 12
+    total_months = investment_years * 12
+
+    future_current_asset = current_asset * (
+        (1 + monthly_return) ** total_months
+    )
+
+    future_contributions = 0
+
+    for month in range(total_months):
+        remaining_months = total_months - month
+
+        future_contributions += monthly_investment * (
+            (1 + monthly_return) ** remaining_months
+        )
+
+    future_value = future_current_asset + future_contributions
+
+    total_principal = (
+        current_asset
+        + monthly_investment * total_months
+    )
+
+    investment_profit = future_value - total_principal
+
+    return {
+        "annual_return": annual_return,
+        "future_value": int(future_value),
+        "total_principal": total_principal,
+        "investment_profit": int(investment_profit),
+    }
+
+
+def create_yearly_projection(
+    current_asset: int,
+    monthly_investment: int,
+    investment_years: int,
+    annual_return: float,
+):
+    monthly_return = annual_return / 12
+    current_value = current_asset
+
+    projection = [
+        {
+            "year": 0,
+            "asset": int(current_value),
+        }
+    ]
+
+    for month in range(1, investment_years * 12 + 1):
+        current_value *= (1 + monthly_return)
+        current_value += monthly_investment
+
+        if month % 12 == 0:
+            projection.append({
+                "year": month // 12,
+                "asset": int(current_value),
+            })
+
+    return projection
+
+
 def calculate_portfolio(request: PortfolioRequest):
     risk_score = calculate_risk_score(request)
     risk_grade = determine_risk_grade(risk_score)
@@ -163,6 +241,22 @@ def calculate_portfolio(request: PortfolioRequest):
         request.investment_years,
     )
 
+    annual_return = get_expected_annual_return(risk_grade)
+
+    future_simulation = simulate_future_value(
+        request.current_asset,
+        request.monthly_investment,
+        request.investment_years,
+        annual_return,
+    )
+
+    yearly_projection = create_yearly_projection(
+        request.current_asset,
+        request.monthly_investment,
+        request.investment_years,
+        annual_return,
+    )
+    
     return {
         "age": request.age,
         "current_asset": request.current_asset,
@@ -176,4 +270,6 @@ def calculate_portfolio(request: PortfolioRequest):
         "investment_plan": investment_plan,
         "current_asset_plan": current_asset_plan,
         "principal_summary": principal_summary,
+        "future_simulation": future_simulation,
+        "yearly_projection": yearly_projection,
     }
